@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabShed AI - College Laboratory Experiment Scheduler (CBC073)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glow { box-shadow: 0 0 25px -5px rgba(59, 130, 246, 0.3); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <header class="glass border-b border-slate-800 sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <div class="bg-blue-600 text-white p-2.5 rounded-xl glow font-bold text-lg"><i class="fa-solid fa-flask-vial"></i></div>
+            <div>
+                <h1 class="font-bold text-lg tracking-wide text-white">LabShed <span class="text-blue-400 text-xs px-2 py-0.5 bg-blue-950 border border-blue-800 rounded-full">PS-053</span></h1>
+                <p class="text-xs text-slate-400">Team HAT VERTEX (CBC073) | Panel: Kavyashree</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button onclick="loadDemoData()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-xs font-medium rounded-lg transition text-white shadow"><i class="fa-solid fa-bolt mr-1"></i> Quick Demo Load</button>
+            <span class="text-xs px-3 py-1 bg-slate-800 border border-slate-700 rounded-lg text-slate-300 font-mono">Flask + SQLite Stack</span>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div class="lg:col-span-1 space-y-6">
+            <div class="glass p-5 rounded-2xl space-y-4">
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400">System Status</h2>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700/50 text-center">
+                        <span id="stat-groups" class="text-xl font-bold text-blue-400">3</span>
+                        <p class="text-[10px] text-slate-400 uppercase mt-0.5">Active Groups</p>
+                    </div>
+                    <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700/50 text-center">
+                        <span id="stat-conflicts" class="text-xl font-bold text-rose-400">0</span>
+                        <p class="text-[10px] text-slate-400 uppercase mt-0.5">Conflicts</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass p-5 rounded-2xl space-y-4">
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 flex items-center"><i class="fa-solid fa-plus-circle mr-2 text-blue-400"></i> Schedule Request</h2>
+                <form id="schedule-form" onsubmit="handleSchedule(event)" class="space-y-3">
+                    <div>
+                        <label class="text-xs text-slate-300">Student Group</label>
+                        <input type="text" id="group-name" required placeholder="e.g., CSE-3A" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-300">Experiment / Lab</label>
+                        <input type="text" id="exp-name" required placeholder="e.g., OS Deadlock Lab" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-300">Required Equipment</label>
+                        <select id="eq-needed" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                            <option value="Oscilloscope">Oscilloscope (Stock: 2)</option>
+                            <option value="Workstation PC">Workstation PC (Stock: 5)</option>
+                            <option value="IoT Kit">IoT Kit (Stock: 2)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-300">Instructor</label>
+                        <select id="instructor" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                            <option value="Dr. Smith">Dr. Smith</option>
+                            <option value="Prof. Alan">Prof. Alan</option>
+                            <option value="Dr. Maria">Dr. Maria</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-300">Time Slot</label>
+                        <select id="timeslot" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                            <option value="Slot 1 (09:00 - 11:00 AM)">Slot 1 (09:00 - 11:00 AM)</option>
+                            <option value="Slot 2 (11:30 - 01:30 PM)">Slot 2 (11:30 - 01:30 PM)</option>
+                            <option value="Slot 3 (02:30 - 04:30 PM)">Slot 3 (02:30 - 04:30 PM)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-xs font-semibold rounded-xl transition shadow-lg text-white">
+                        Run Constraint Engine
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="lg:col-span-3 space-y-6">
+            <div id="alert-box" class="hidden glass border-rose-500/50 bg-rose-950/20 p-4 rounded-2xl flex items-start space-x-3">
+                <i class="fa-solid fa-triangle-exclamation text-rose-400 mt-0.5"></i>
+                <div class="flex-1">
+                    <h3 class="text-xs font-bold text-rose-300 uppercase tracking-wide">Conflict Detected by Algorithm</h3>
+                    <p id="alert-text" class="text-xs text-slate-300 mt-1"></p>
+                </div>
+            </div>
+
+            <div class="glass p-6 rounded-2xl space-y-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-300"><i class="fa-solid fa-calendar-days mr-2 text-blue-400"></i> Generated Conflict-Free Timetable</h2>
+                    <span class="text-xs text-slate-400">Auto-matched capacity & equipment</span>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-slate-400 uppercase text-[10px]">
+                                <th class="p-3">Time Slot</th>
+                                <th class="p-3">Group</th>
+                                <th class="p-3">Experiment</th>
+                                <th class="p-3">Equipment</th>
+                                <th class="p-3">Instructor</th>
+                                <th class="p-3 text-right">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schedule-table-body" class="divide-y divide-slate-800/60"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="glass p-6 rounded-2xl space-y-4">
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-300"><i class="fa-solid fa-server mr-2 text-emerald-400"></i> Laboratory Resource Inventory & Constraints</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                        <div class="flex justify-between font-medium"><span class="text-slate-300">Oscilloscopes</span> <span class="text-blue-400">Max: 2</span></div>
+                        <div class="w-full bg-slate-800 h-2 rounded-full mt-2"><div class="bg-blue-500 h-2 rounded-full" style="width: 50%"></div></div>
+                    </div>
+                    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                        <div class="flex justify-between font-medium"><span class="text-slate-300">Workstation PCs</span> <span class="text-emerald-400">Max: 5</span></div>
+                        <div class="w-full bg-slate-800 h-2 rounded-full mt-2"><div class="bg-emerald-500 h-2 rounded-full" style="width: 40%"></div></div>
+                    </div>
+                    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                        <div class="flex justify-between font-medium"><span class="text-slate-300">IoT Kits</span> <span class="text-purple-400">Max: 2</span></div>
+                        <div class="w-full bg-slate-800 h-2 rounded-full mt-2"><div class="bg-purple-500 h-2 rounded-full" style="width: 50%"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="text-center py-4 text-xs text-slate-500 border-t border-slate-800">
+        College Laboratory Experiment Scheduler • Developed for CBC 2.0 Design Round (Team HAT VERTEX)
+    </footer>
+
+    <script>
+        let schedules = [
+            { group: "CSE-3A", exp: "Digital Logic Design", eq: "Oscilloscope", instructor: "Dr. Smith", slot: "Slot 1 (09:00 - 11:00 AM)" },
+            { group: "ECE-3B", exp: "Microcontroller Interfacing", eq: "IoT Kit", instructor: "Prof. Alan", slot: "Slot 2 (11:30 - 01:30 PM)" }
+        ];
+
+        const equipmentLimits = { "Oscilloscope": 2, "Workstation PC": 5, "IoT Kit": 2 };
+
+        function render() {
+            const tbody = document.getElementById("schedule-table-body");
+            tbody.innerHTML = "";
+            schedules.forEach((item) => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="p-3 font-medium text-slate-300">${item.slot}</td>
+                        <td class="p-3 font-semibold text-blue-400">${item.group}</td>
+                        <td class="p-3 text-slate-300">${item.exp}</td>
+                        <td class="p-3 text-slate-400">${item.eq}</td>
+                        <td class="p-3 text-slate-300">${item.instructor}</td>
+                        <td class="p-3 text-right"><span class="px-2 py-1 bg-emerald-950/60 border border-emerald-800 text-emerald-400 rounded text-[10px] font-medium">Approved</span></td>
+                    </tr>
+                `;
+            });
+            document.getElementById("stat-groups").innerText = schedules.length;
+        }
+
+        function loadDemoData() {
+            schedules = [
+                { group: "CSE-3A", exp: "OS Scheduling Lab", eq: "Workstation PC", instructor: "Dr. Smith", slot: "Slot 1 (09:00 - 11:00 AM)" },
+                { group: "ECE-3B", exp: "Signal Processing", eq: "Oscilloscope", instructor: "Prof. Alan", slot: "Slot 2 (11:30 - 01:30 PM)" },
+                { group: "ISE-3C", exp: "Sensor Node Setup", eq: "IoT Kit", instructor: "Dr. Maria", slot: "Slot 3 (02:30 - 04:30 PM)" }
+            ];
+            document.getElementById("alert-box").classList.add("hidden");
+            document.getElementById("stat-conflicts").innerText = "0";
+            render();
+        }
+
+        function handleSchedule(e) {
+            e.preventDefault();
+            const group = document.getElementById("group-name").value;
+            const exp = document.getElementById("exp-name").value;
+            const eq = document.getElementById("eq-needed").value;
+            const instructor = document.getElementById("instructor").value;
+            const slot = document.getElementById("timeslot").value;
+            const alertBox = document.getElementById("alert-box");
+            const alertText = document.getElementById("alert-text");
+
+            const instructorConflict = schedules.find(s => s.instructor === instructor && s.slot === slot);
+            if (instructorConflict) {
+                alertBox.classList.remove("hidden");
+                alertText.innerText = `Instructor ${instructor} is already assigned to group ${instructorConflict.group} during ${slot}!`;
+                document.getElementById("stat-conflicts").innerText = "1";
+                return;
+            }
+
+            const sameSlotEqCount = schedules.filter(s => s.slot === slot && s.eq === eq).length;
+            if (sameSlotEqCount >= equipmentLimits[eq]) {
+                alertBox.classList.remove("hidden");
+                alertText.innerText = `Resource limit reached! Max available units for ${eq} (${equipmentLimits[eq]}) are already booked.`;
+                document.getElementById("stat-conflicts").innerText = "1";
+                return;
+            }
+
+            alertBox.classList.add("hidden");
+            document.getElementById("stat-conflicts").innerText = "0";
+            schedules.push({ group, exp, eq, instructor, slot });
+            render();
+            document.getElementById("schedule-form").reset();
+        }
+
+        render();
+    </script>
+</body>
+</html>
